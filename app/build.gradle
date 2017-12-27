@@ -1,0 +1,83 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.2"
+    defaultConfig {
+        applicationId "com.example.administrator.mymulti_channel_package"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true  //突破应用方法数65535的一个限制
+        manifestPlaceholders = [UMENG_CHANNEL_VALUE: "xiaomi"] //默认的渠道名,可以不设置此项
+    }
+
+    //添加我们的签名文件配置
+    signingConfigs {
+        debug {
+            storeFile file("common.jks")
+            storePassword "123456"
+            keyAlias "libing"
+            keyPassword "123456"
+        }
+        //为我们的release添加签名文件配置
+        release {
+            storeFile file("common.jks")
+            storePassword "123456"
+            keyAlias "libing"
+            keyPassword "123456"
+        }
+    }
+
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release   //指定签名文件,如下signingConfigs
+            //指定我们release包的输出文件名就是我们的渠道名字
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    def outputFile = output.outputFile
+                    if (outputFile != null && outputFile.name.endsWith(".apk")) {
+                        def fileName = "${variant.productFlavors[0].name}" + ".apk"
+                        output.outputFile = new File(outputFile.parent, fileName);
+                    }
+                }
+            }
+        }
+        debug {
+            signingConfig signingConfigs.debug  //在debug模式下,使用正式的签名文件
+        }
+    }
+
+    productFlavors {
+        huawei {
+//            manifestPlaceholders = [UMENG_CHANNEL_VALUE: "huawei"]
+        }
+
+        wandoujia {
+//            manifestPlaceholders = [UMENG_CHANNEL_VALUE: "wandoujia"]
+        }
+
+        xiaomi {
+//            manifestPlaceholders = [UMENG_CHANNEL_VALUE: "xiaomi"]
+        }
+    }
+
+    //批量修改
+    productFlavors.all {
+        flavor -> flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+    }
+
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.android.support:appcompat-v7:26.+'
+    compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile files('libs/umeng-analytics-7.4.1.jar')
+    compile files('libs/umeng-common-1.4.1.jar')
+}
